@@ -199,26 +199,122 @@
 // }
 /* ____________________________ */
 
-/*  */
-#[allow(clippy::pedantic, unsafe_code)]
-pub mod my_module {
-    pub fn add(a: i32, b: i32) -> i32 {
-        a + b
-    }
+/* Tao test module for git */
+/* Running: cargo test */
+// #[allow(clippy::pedantic, unsafe_code)]
+// pub mod my_module {
+//     pub fn add(a: i32, b: i32) -> i32 {
+//         a + b
+//     }
 
-    pub fn subtract(a: i32, b: i32) -> i32 {
-        a - b
-    }
+//     pub fn subtract(a: i32, b: i32) -> i32 {
+//         a - b
+//     }
 
-    pub mod tests {
-        use super::*;
-        #[test]
-        fn test_add() {
-            assert_eq!(add(1, 2), 3);
+//     pub mod tests {
+//         use super::*;
+//         #[test]
+//         fn test_add() {
+//             assert_eq!(add(1, 2), 3);
+//         }
+//     }
+// }
+
+// fn main() {
+//     println!("DangDepTrai");
+// }
+
+/* Lifetime parameter */
+// 'a la lifetime annotation, thong bao cho compiler biet la return value se valid neu input x va y co cung lifetime 'a
+// fn longer<'a>(x: &'a str, y: &'a str) -> &'a str {
+//     if x.len() > y.len() {
+//         x
+//     } else {
+//         y
+//     }
+// }
+
+// fn main() {
+//     let string1 = String::from("long string is long");
+//     let result;
+//     {
+//         let string2 = String::from("xyz");
+//         result = longer(string1.as_str(), string2.as_str());
+//         // Build se bi loi, o truong hop nay string2 se bien mat khi ra khoi ngoac {}
+//         // nen neu string2 dai hon string1, thi result se la string2, nhung ma vi khi ra khoi ngoac
+//         // string2 da bien mat, nen result se khong co gia tri??, nen compiling se bao loi
+//         // borrowed value does not live long enough
+//     }
+//     // string2 is dropped here
+//     println!("The longer string is {}", result);
+// }
+
+/* PhantomData in rust */
+/* PhantomData la marker (dau an) de gan vao 1 struct, muc tich trong viec gan lifetime vao trong 1 pointer
+   De bao voi compiler biet la ref cho 1 bien can phai gan voi 1 lifeTime nhat dich, de neu lifetime cua 1 ptr
+   bi over thi compiler se bao loi luc compiling time luon */
+use std::{marker::PhantomData, ptr::NonNull};
+struct MyStruct<T> {
+    ptr: NonNull<T>,
+}
+
+impl<T> MyStruct<T> {
+    fn new(reference: &T) -> MyStruct<T> {
+        MyStruct {
+            ptr: NonNull::from(reference),
         }
+    }
+
+    fn get(&self) -> &T {
+        unsafe { self.ptr.as_ref() }
     }
 }
 
+struct MyStructWithPhantom<'a, T> {
+    ptr: NonNull<T>,
+    _marker: PhantomData<&'a T>, 
+    // ta gan _market vao PhantomData voi life time 'a, de thong bao cho compiler biet rang
+    // ptr luon phai gan lien voi lifetime 'a
+    // boi vi ptr khong bao gio co lifetime o trong do (giong nhu C) nen Rust define them 1 bien PhantomData
+    // de gan ptr vao lifetime
+}
+
+impl<'a, T> MyStructWithPhantom<'a, T> {
+    fn new(reference: &'a T) -> MyStructWithPhantom<'a, T> {
+        MyStructWithPhantom {
+            ptr: NonNull::from(reference),
+            _marker: PhantomData,
+        }
+    }
+
+    fn get(&self) -> &'a T {
+        unsafe { self.ptr.as_ref() }
+        // boi vi tra ve ref cho ptr nen phai de vao block unsafe{}, nham bao cho compiler biet rang
+        // developer se chiu trach nhiem ve viec quan ly ptr nay
+    }
+}
+
+
 fn main() {
-    println!("DangDepTrai");
+    let my_struct: MyStruct<i32>;
+    {
+        let i: i32 = 5;
+        my_struct = MyStruct::new(&i);
+    }
+    // my_struct hien tai dang lay reference cua i, nhung o day i se invalid, cho nen code nay se co risk.
+    // Do la ly do tai sao PhantomData ra doi. PhantomData giup thong bao cho compiler biet
+    // reference trong my_struct se phai ton tai trong cung 1 life time voi 'a trong PhantomData
+    println!("Print out my_struct value = {}", my_struct.get());
+    
+
+    let my_struct_with_phantom;
+    {
+        let i: i32 = 33;
+        my_struct_with_phantom = MyStructWithPhantom::new(&i);
+        println!("Print out my_struct_with_phantom = {}", my_struct_with_phantom.get());
+    }
+    // khong the chay lenh println!() o day, vi bien i khong con valid nua, lifetime out
+    // PhantomData giup phat hien loi o compiling time
+    // println!("Print out my_struct_with_phantom = {}", my_struct_with_phantom.get());
+
 }
