@@ -1,0 +1,7 @@
+{
+  "rust-analyzer.inlayHints.typeHints": true,
+  "rust-analyzer.inlayHints.parameterHints": true,
+  "rust-analyzer.inlayHints.chainingHints": true,
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+}
