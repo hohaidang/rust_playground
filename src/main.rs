@@ -253,68 +253,154 @@
 /* PhantomData la marker (dau an) de gan vao 1 struct, muc tich trong viec gan lifetime vao trong 1 pointer
    De bao voi compiler biet la ref cho 1 bien can phai gan voi 1 lifeTime nhat dich, de neu lifetime cua 1 ptr
    bi over thi compiler se bao loi luc compiling time luon */
-use std::{marker::PhantomData, ptr::NonNull};
-struct MyStruct<T> {
-    ptr: NonNull<T>,
+// use std::{marker::PhantomData, ptr::NonNull};
+// struct MyStruct<T> {
+//     ptr: NonNull<T>,
+// }
+
+// impl<T> MyStruct<T> {
+//     fn new(reference: &T) -> MyStruct<T> {
+//         MyStruct {
+//             ptr: NonNull::from(reference),
+//         }
+//     }
+
+//     fn get(&self) -> &T {
+//         unsafe { self.ptr.as_ref() }
+//     }
+// }
+
+// struct MyStructWithPhantom<'a, T> {
+//     ptr: NonNull<T>,
+//     _marker: PhantomData<&'a T>, 
+//     // ta gan _market vao PhantomData voi life time 'a, de thong bao cho compiler biet rang
+//     // ptr luon phai gan lien voi lifetime 'a
+//     // boi vi ptr khong bao gio co lifetime o trong do (giong nhu C) nen Rust define them 1 bien PhantomData
+//     // de gan ptr vao lifetime
+// }
+
+// impl<'a, T> MyStructWithPhantom<'a, T> {
+//     fn new(reference: &'a T) -> MyStructWithPhantom<'a, T> {
+//         MyStructWithPhantom {
+//             ptr: NonNull::from(reference),
+//             _marker: PhantomData,
+//         }
+//     }
+
+//     fn get(&self) -> &'a T {
+//         unsafe { self.ptr.as_ref() }
+//         // boi vi tra ve ref cho ptr nen phai de vao block unsafe{}, nham bao cho compiler biet rang
+//         // developer se chiu trach nhiem ve viec quan ly ptr nay
+//     }
+// }
+
+
+// fn main() {
+//     let my_struct: MyStruct<i32>;
+//     {
+//         let i: i32 = 5;
+//         my_struct = MyStruct::new(&i);
+//     }
+//     // my_struct hien tai dang lay reference cua i, nhung o day i se invalid, cho nen code nay se co risk.
+//     // Do la ly do tai sao PhantomData ra doi. PhantomData giup thong bao cho compiler biet
+//     // reference trong my_struct se phai ton tai trong cung 1 life time voi 'a trong PhantomData
+//     println!("Print out my_struct value = {}", my_struct.get());
+    
+
+//     let my_struct_with_phantom;
+//     {
+//         let i: i32 = 33;
+//         my_struct_with_phantom = MyStructWithPhantom::new(&i);
+//         println!("Print out my_struct_with_phantom = {}", my_struct_with_phantom.get());
+//     }
+//     // khong the chay lenh println!() o day, vi bien i khong con valid nua, lifetime out
+//     // PhantomData giup phat hien loi o compiling time
+//     // println!("Print out my_struct_with_phantom = {}", my_struct_with_phantom.get());
+
+// }
+
+/* Primitive type in rust */
+// Primitive thuong duoc dung de store tat ca cac primary data type(String, int, float,...) trong rust
+// No duoc thich hop cho viec flexible trong code va generic programing
+// Nhu trong vi du duoi day, chung ta co 3 loai data la username(string), age(int), email(string)
+// Chung ta muon tuan tu hoa (serialize) 3 loai data nay thanh 1 mang string, theo kieu json file
+// vd: { "username": "john_doe", "age": 30, "email": "john.doe@example.com" }
+use std::any::Any;
+
+pub enum Schema {
+    Struct(StructSchema),
+    Primitive(String),
 }
 
-impl<T> MyStruct<T> {
-    fn new(reference: &T) -> MyStruct<T> {
-        MyStruct {
-            ptr: NonNull::from(reference),
-        }
-    }
+pub struct StructSchema {
+    fields: Vec<(String, Schema)>, 
+    //tuple cua Vector vs 2 phna tu la String va 
+    // String o day de chua ten du lieu, vd "username", "age"
+    // Schema(Schema nay neu la Primitive thi co the la bat cu data nao, int, string, float,...), no se la gia value cua du lieu
+    // vd age: thi value la 30, username thi value la "dang"
+    // muc dich cua Primitive duoc the hien o day khi co the tao ra nhieu dang data nhu age, username,... ma khong can phai define nhieu khi du lieu
+}
 
-    fn get(&self) -> &T {
-        unsafe { self.ptr.as_ref() }
+pub struct UserProfile {
+    username: String,
+    age: i32,
+    email: String,
+}
+
+// data la du lieu dau vao, nhu ten la gi, tuoi bao nhieu
+// schema la kieu du lieu de serialize
+fn serialize(data: &dyn Any, schema: &Schema) -> String {
+    match schema {
+        Schema::Primitive(type_name) => {
+            match type_name.as_str() {
+                "int" => format!("{}", data.downcast_ref::<i32>().unwrap()),
+                "string" => format!("\"{}\"", data.downcast_ref::<String>().unwrap()),
+                _ => panic!("Unsupported primitive type"),
+            }
+        },
+        Schema::Struct(struct_schema) => {
+            let mut serialized_fields = Vec::new();
+            let user_profile = data.downcast_ref::<UserProfile>().unwrap();
+            for (field_name, field_schema) in &struct_schema.fields {
+                let field_value: &dyn Any = match field_name.as_str() {
+                    "username" => &user_profile.username,
+                    "age" => &user_profile.age,
+                    "email" => &user_profile.email,
+                    _ => panic!("Unknown field"),
+                };
+                serialized_fields.push(format!(
+                    "\"{}\": {}",
+                    field_name,
+                    serialize(field_value, field_schema)
+                ));
+            }
+            format!("{{ {} }}", serialized_fields.join(", ")) // return string
+        },
     }
 }
 
-struct MyStructWithPhantom<'a, T> {
-    ptr: NonNull<T>,
-    _marker: PhantomData<&'a T>, 
-    // ta gan _market vao PhantomData voi life time 'a, de thong bao cho compiler biet rang
-    // ptr luon phai gan lien voi lifetime 'a
-    // boi vi ptr khong bao gio co lifetime o trong do (giong nhu C) nen Rust define them 1 bien PhantomData
-    // de gan ptr vao lifetime
-}
-
-impl<'a, T> MyStructWithPhantom<'a, T> {
-    fn new(reference: &'a T) -> MyStructWithPhantom<'a, T> {
-        MyStructWithPhantom {
-            ptr: NonNull::from(reference),
-            _marker: PhantomData,
-        }
-    }
-
-    fn get(&self) -> &'a T {
-        unsafe { self.ptr.as_ref() }
-        // boi vi tra ve ref cho ptr nen phai de vao block unsafe{}, nham bao cho compiler biet rang
-        // developer se chiu trach nhiem ve viec quan ly ptr nay
-    }
-}
 
 
 fn main() {
-    let my_struct: MyStruct<i32>;
-    {
-        let i: i32 = 5;
-        my_struct = MyStruct::new(&i);
-    }
-    // my_struct hien tai dang lay reference cua i, nhung o day i se invalid, cho nen code nay se co risk.
-    // Do la ly do tai sao PhantomData ra doi. PhantomData giup thong bao cho compiler biet
-    // reference trong my_struct se phai ton tai trong cung 1 life time voi 'a trong PhantomData
-    println!("Print out my_struct value = {}", my_struct.get());
-    
+    // Define the schema for UserProfile
+    let user_profile_schema = Schema::Struct(StructSchema {
+        fields: vec![
+            (String::from("username"), Schema::Primitive(String::from("string"))),
+            (String::from("age"), Schema::Primitive(String::from("int"))),
+            (String::from("email"), Schema::Primitive(String::from("string"))),
+        ],
+    });
 
-    let my_struct_with_phantom;
-    {
-        let i: i32 = 33;
-        my_struct_with_phantom = MyStructWithPhantom::new(&i);
-        println!("Print out my_struct_with_phantom = {}", my_struct_with_phantom.get());
-    }
-    // khong the chay lenh println!() o day, vi bien i khong con valid nua, lifetime out
-    // PhantomData giup phat hien loi o compiling time
-    // println!("Print out my_struct_with_phantom = {}", my_struct_with_phantom.get());
+    // Create a user profile instance
+    let user_profile = UserProfile {
+        username: String::from("john_doe"),
+        age: 30,
+        email: String::from("john.doe@example.com"),
+    };
 
+    // Serialize the user profile
+    let serialized_profile = serialize(&user_profile, &user_profile_schema);
+    println!("Serialized user profile: {}", serialized_profile);
+
+    // Here, you could save the serialized_profile to a file or send it over a network
 }

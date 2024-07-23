@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Rust (Release)",
+            "type": "lldb",
+            "request": "launch",
+            // export to MxGW.log but need to kill raptor2 at terminal
+            // "program": "/bin/sh",
+            // "args": [
+            //     "-c",
+            //     "${workspaceFolder}/target/release/raptor2 ${workspaceFolder}/projects/ouch_asx_software/tests/cfg.json > ${workspaceFolder}/mxgw.log"
+            // ],
+
+            // automatically kill raptor when stop debugging
+            "program": "${workspaceFolder}/target/debug/rust_playground",
+            "args": [""],
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": ["rust"],
+        }
+    ]
+}
