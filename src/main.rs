@@ -479,8 +479,14 @@ fn main() {
         items: vec![1, 2, 3, 4, 5],
     };
 
-    // Using IntoIterator to iterate over the collection
-    for item in my_collection {
-        println!("{}", item);
+    // sau khi goi into_iter() o day thi my_collection.items se bi mat
+    for value in my_collection.items.into_iter() {
+        println!("{}", value);
     }
+
+    // hoac co the viet 1 cach khac
+    // let mut iter = my_vector.into_iter();
+    // while let Some(value) = iter.next() {
+    //     println!("{}", value);
+    // }
 }
