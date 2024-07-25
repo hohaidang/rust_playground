@@ -325,82 +325,162 @@
 // Nhu trong vi du duoi day, chung ta co 3 loai data la username(string), age(int), email(string)
 // Chung ta muon tuan tu hoa (serialize) 3 loai data nay thanh 1 mang string, theo kieu json file
 // vd: { "username": "john_doe", "age": 30, "email": "john.doe@example.com" }
-use std::any::Any;
+// use std::any::Any;
 
-pub enum Schema {
-    Struct(StructSchema),
-    Primitive(String),
+// pub enum Schema {
+//     Struct(StructSchema),
+//     Primitive(String),
+// }
+
+// pub struct StructSchema {
+//     fields: Vec<(String, Schema)>, 
+//     //tuple cua Vector vs 2 phna tu la String va Schema
+//     // String o day de chua ten du lieu, vd "username", "age"
+//     // Schema(Schema nay neu la Primitive thi co the la bat cu data nao, int, string, float,...), no se la gia value cua du lieu
+//     // vd age: thi value la 30, username thi value la "dang"
+//     // muc dich cua Primitive duoc the hien o day khi co the tao ra nhieu dang data nhu age, username,... ma khong can phai define nhieu khi du lieu
+// }
+
+// pub struct UserProfile {
+//     username: String,
+//     age: i32,
+//     email: String,
+// }
+
+// // data la du lieu dau vao, nhu ten la gi, tuoi bao nhieu
+// // schema la kieu du lieu de serialize
+// fn serialize(data: &dyn Any, schema: &Schema) -> String {
+//     match schema {
+//         Schema::Primitive(type_name) => {
+//             match type_name.as_str() {
+//                 "int" => format!("{}", data.downcast_ref::<i32>().unwrap()),
+//                 "string" => format!("\"{}\"", data.downcast_ref::<String>().unwrap()),
+//                 _ => panic!("Unsupported primitive type"),
+//             }
+//         },
+//         Schema::Struct(struct_schema) => {
+//             let mut serialized_fields = Vec::new();
+//             let user_profile = data.downcast_ref::<UserProfile>().unwrap();
+//             for (field_name, field_schema) in &struct_schema.fields {
+//                 let field_value: &dyn Any = match field_name.as_str() {
+//                     "username" => &user_profile.username,
+//                     "age" => &user_profile.age,
+//                     "email" => &user_profile.email,
+//                     _ => panic!("Unknown field"),
+//                 };
+//                 serialized_fields.push(format!(
+//                     "\"{}\": {}",
+//                     field_name,
+//                     serialize(field_value, field_schema)
+//                 ));
+//             }
+//             format!("{{ {} }}", serialized_fields.join(", ")) // return string
+//         },
+//     }
+// }
+
+
+
+// fn main() {
+//     // Define the schema for UserProfile
+//     let user_profile_schema = Schema::Struct(StructSchema {
+//         fields: vec![
+//             (String::from("username"), Schema::Primitive(String::from("string"))),
+//             (String::from("age"), Schema::Primitive(String::from("int"))),
+//             (String::from("email"), Schema::Primitive(String::from("string"))),
+//         ],
+//     });
+
+//     // Create a user profile instance
+//     let user_profile = UserProfile {
+//         username: String::from("john_doe"),
+//         age: 30,
+//         email: String::from("john.doe@example.com"),
+//     };
+
+//     // Serialize the user profile
+//     let serialized_profile = serialize(&user_profile, &user_profile_schema);
+//     println!("Serialized user profile: {}", serialized_profile);
+
+//     // Here, you could save the serialized_profile to a file or send it over a network
+// }
+
+/* Vector in Rust va cach de assign nhanh 1 Vec<Column> o trong struct vao 1 bien */ 
+// #[derive(Debug, Clone)]
+// pub struct Column {
+//     name: String,
+//     data_type: String,
+//     check: Option<String>,
+// }
+
+// /// Schema for a struct.
+// #[derive(Debug, Clone)]
+// pub struct StructSchema {
+//     /// Columns
+//     columns: Vec<Column>,
+// }
+
+// /// Only used in derive macro.
+// #[derive(Debug, Clone)]
+// pub enum Schema {
+//     /// Composite type
+//     Struct(StructSchema),
+//     /// Primitive type
+//     Primitive(String),
+// }
+
+// pub fn flatten(schemas: &[(String, StructSchema)]) -> StructSchema {
+//     // Example implementation: return the first schema's StructSchema
+//     schemas[0].1.clone()
+// }
+
+// fn main() {
+//     let key_schema = StructSchema {
+//         columns: vec![
+//             Column {
+//                 name: "id".to_string(),
+//                 data_type: "int".to_string(),
+//                 check: None,
+//             },
+//             Column {
+//                 name: "name".to_string(),
+//                 data_type: "string".to_string(),
+//                 check: None,
+//             },
+//         ],
+//     };
+
+//     let schemas = [("key".to_string(), key_schema.clone())];
+
+//     let StructSchema {
+//         columns: primary_columns,
+//         ..
+//     } = flatten(&schemas);
+//     // flatten tra ve StructSchema, roi sau do assign return (StructSchema.columns) vao trong variable name primary_columns
+//     // hoac co the viet nhu secondary column duoi day
+//     let result_schema: StructSchema = flatten(&schemas);
+//     let secondary_columns = result_schema.columns;
+    
+//     println!("{:?}", primary_columns);
+//     println!("{:?}", secondary_columns);
+
+//     let data: Vec<i32> = vec![1, 2, 3];
+//     println!("Dang vector = {:?}", data);
+// }
+
+
+/* IntoIterator */
+struct MyCollection {
+    items: Vec<i32>,
 }
-
-pub struct StructSchema {
-    fields: Vec<(String, Schema)>, 
-    //tuple cua Vector vs 2 phna tu la String va 
-    // String o day de chua ten du lieu, vd "username", "age"
-    // Schema(Schema nay neu la Primitive thi co the la bat cu data nao, int, string, float,...), no se la gia value cua du lieu
-    // vd age: thi value la 30, username thi value la "dang"
-    // muc dich cua Primitive duoc the hien o day khi co the tao ra nhieu dang data nhu age, username,... ma khong can phai define nhieu khi du lieu
-}
-
-pub struct UserProfile {
-    username: String,
-    age: i32,
-    email: String,
-}
-
-// data la du lieu dau vao, nhu ten la gi, tuoi bao nhieu
-// schema la kieu du lieu de serialize
-fn serialize(data: &dyn Any, schema: &Schema) -> String {
-    match schema {
-        Schema::Primitive(type_name) => {
-            match type_name.as_str() {
-                "int" => format!("{}", data.downcast_ref::<i32>().unwrap()),
-                "string" => format!("\"{}\"", data.downcast_ref::<String>().unwrap()),
-                _ => panic!("Unsupported primitive type"),
-            }
-        },
-        Schema::Struct(struct_schema) => {
-            let mut serialized_fields = Vec::new();
-            let user_profile = data.downcast_ref::<UserProfile>().unwrap();
-            for (field_name, field_schema) in &struct_schema.fields {
-                let field_value: &dyn Any = match field_name.as_str() {
-                    "username" => &user_profile.username,
-                    "age" => &user_profile.age,
-                    "email" => &user_profile.email,
-                    _ => panic!("Unknown field"),
-                };
-                serialized_fields.push(format!(
-                    "\"{}\": {}",
-                    field_name,
-                    serialize(field_value, field_schema)
-                ));
-            }
-            format!("{{ {} }}", serialized_fields.join(", ")) // return string
-        },
-    }
-}
-
-
 
 fn main() {
-    // Define the schema for UserProfile
-    let user_profile_schema = Schema::Struct(StructSchema {
-        fields: vec![
-            (String::from("username"), Schema::Primitive(String::from("string"))),
-            (String::from("age"), Schema::Primitive(String::from("int"))),
-            (String::from("email"), Schema::Primitive(String::from("string"))),
-        ],
-    });
-
-    // Create a user profile instance
-    let user_profile = UserProfile {
-        username: String::from("john_doe"),
-        age: 30,
-        email: String::from("john.doe@example.com"),
+    let my_collection = MyCollection {
+        items: vec![1, 2, 3, 4, 5],
     };
 
-    // Serialize the user profile
-    let serialized_profile = serialize(&user_profile, &user_profile_schema);
-    println!("Serialized user profile: {}", serialized_profile);
-
-    // Here, you could save the serialized_profile to a file or send it over a network
+    // Using IntoIterator to iterate over the collection
+    for item in my_collection {
+        println!("{}", item);
+    }
 }
