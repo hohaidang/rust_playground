@@ -511,7 +511,10 @@ Trong C++ ta define 1 base class (nhu Animal), va 1 class khac (nhu Dog, Cat) in
 Sau do trong class thu 2 co virtual function (speak). Khi Compiler chay
 no se tuy thuoc vao bien la class (Dog, Cat) nao ma goi virtual function speak la "Wolf" hay "Meow" */
 /* dyn trong rust cung tuong tu nhu vay */
+/* dyn la Dynamic Dispatch, tuc la khi run-time moi biet function duoc goi la gi, fat pointer tro vao virtual method table */
+/* Khac voi thong thuong la Static Dispatch */
 
+use std::any::Any;
 trait Animal {
     fn speak(&self) {}
 }
@@ -534,10 +537,23 @@ fn main() {
     println!("Box integer: {}", data);
 
     let animals: Vec<Box<dyn Animal>> = vec![Box::new(Dog), Box::new(Cat)];
-    // dyn cho phep trong run time co the bien dich ra Animal la Dog hoac Cat de goi function tuong ung
+    // dyn cho phep trong run time co the bien dich Animal ra la Dog hoac Cat de goi function tuong ung
     // giong nhu virtual function trong C++
 
     for animal in animals {
         animal.speak(); // khi goi den Dog thi se la Woof, Cat se la Meow
+    }
+    
+    // tao 1 smart_pointer Box co the chua bat ky kieu du lieu gi
+    let values: Vec<Box<dyn Any>> = vec![Box::new(10), Box::new(String::from("Dang dep trai"))];
+    for value in values {
+        // downcast_ref de cast type cua value thanh 1 type T nao do, tra ve Option<&T> nen phai dung Some
+        if let Some(v) = value.downcast_ref::<i32>() {
+            println!("Found an i32: {}", v);
+        } else if let Some(v) = value.downcast_ref::<String>() {
+            println!("Found a String: {}", v);
+        } else {
+            println!("Found an unknown type.");
+        }
     }
 }
