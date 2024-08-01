@@ -25,7 +25,6 @@
 // }
 /* ____________________________ */
 
-
 /* tuple struct*/
 // pub struct Point(u32, u32);
 // pub enum PointError {
@@ -71,7 +70,6 @@
 /* ____________________________ */
 
 // /* Compute hash code */
-
 // use postgres::{Client, NoTls};
 // use sha2::{Sha256, Digest};
 // use std::fmt::Write;
@@ -80,7 +78,6 @@
 //     // Connect to the PostgreSQL database
 //     // let mut client = Client::connect("host=0.0.0.0 user=raptor password=Raptor dbname=raptor2_test", NoTls)?;
 //     let mut client = Client::connect("host=/home/haidang/raptor2/db user=haidang password=Raptor dbname=raptor2 port=5433", NoTls)?;
-    
 
 //     // Retrieve all table names
 //     let tables = client.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'", &[])?;
@@ -137,7 +134,6 @@
 // }
 /* ____________________________ */
 
-
 // /* Type Hash */
 // use type_hash::TypeHash;
 // use std::fmt;
@@ -171,7 +167,6 @@
 //     assert_eq!(hash, 11652809455620829461);
 // }
 /* ____________________________ */
-
 
 /* Arc su dung trong multi-thread, de 1 bien co the duoc dung trong nhieu thread */
 // use std::sync::Arc;
@@ -251,8 +246,8 @@
 
 /* PhantomData in rust */
 /* PhantomData la marker (dau an) de gan vao 1 struct, muc tich trong viec gan lifetime vao trong 1 pointer
-   De bao voi compiler biet la ref cho 1 bien can phai gan voi 1 lifeTime nhat dich, de neu lifetime cua 1 ptr
-   bi over thi compiler se bao loi luc compiling time luon */
+De bao voi compiler biet la ref cho 1 bien can phai gan voi 1 lifeTime nhat dich, de neu lifetime cua 1 ptr
+bi over thi compiler se bao loi luc compiling time luon */
 // use std::{marker::PhantomData, ptr::NonNull};
 // struct MyStruct<T> {
 //     ptr: NonNull<T>,
@@ -272,7 +267,7 @@
 
 // struct MyStructWithPhantom<'a, T> {
 //     ptr: NonNull<T>,
-//     _marker: PhantomData<&'a T>, 
+//     _marker: PhantomData<&'a T>,
 //     // ta gan _market vao PhantomData voi life time 'a, de thong bao cho compiler biet rang
 //     // ptr luon phai gan lien voi lifetime 'a
 //     // boi vi ptr khong bao gio co lifetime o trong do (giong nhu C) nen Rust define them 1 bien PhantomData
@@ -294,7 +289,6 @@
 //     }
 // }
 
-
 // fn main() {
 //     let my_struct: MyStruct<i32>;
 //     {
@@ -305,7 +299,6 @@
 //     // Do la ly do tai sao PhantomData ra doi. PhantomData giup thong bao cho compiler biet
 //     // reference trong my_struct se phai ton tai trong cung 1 life time voi 'a trong PhantomData
 //     println!("Print out my_struct value = {}", my_struct.get());
-    
 
 //     let my_struct_with_phantom;
 //     {
@@ -333,7 +326,7 @@
 // }
 
 // pub struct StructSchema {
-//     fields: Vec<(String, Schema)>, 
+//     fields: Vec<(String, Schema)>,
 //     //tuple cua Vector vs 2 phna tu la String va Schema
 //     // String o day de chua ten du lieu, vd "username", "age"
 //     // Schema(Schema nay neu la Primitive thi co the la bat cu data nao, int, string, float,...), no se la gia value cua du lieu
@@ -379,8 +372,6 @@
 //     }
 // }
 
-
-
 // fn main() {
 //     // Define the schema for UserProfile
 //     let user_profile_schema = Schema::Struct(StructSchema {
@@ -405,7 +396,7 @@
 //     // Here, you could save the serialized_profile to a file or send it over a network
 // }
 
-/* Vector in Rust va cach de assign nhanh 1 Vec<Column> o trong struct vao 1 bien */ 
+/* Vector in Rust va cach de assign nhanh 1 Vec<Column> o trong struct vao 1 bien */
 // #[derive(Debug, Clone)]
 // pub struct Column {
 //     name: String,
@@ -460,7 +451,7 @@
 //     // hoac co the viet nhu secondary column duoi day
 //     let result_schema: StructSchema = flatten(&schemas);
 //     let secondary_columns = result_schema.columns;
-    
+
 //     println!("{:?}", primary_columns);
 //     println!("{:?}", secondary_columns);
 
@@ -468,25 +459,85 @@
 //     println!("Dang vector = {:?}", data);
 // }
 
+// /* IntoIterator la mot method trong vector dung de loop qua tat ca cac phan tu */
+// struct MyCollection {
+//     items: Vec<i32>,
+// }
 
-/* IntoIterator */
-struct MyCollection {
-    items: Vec<i32>,
+// fn main() {
+//     let my_collection = MyCollection {
+//         items: vec![1, 2, 3, 4, 5],
+//     };
+
+//     // sau khi goi into_iter() o day thi my_collection.items se bi mat
+//     for value in my_collection.items.into_iter() {
+//         println!("{}", value);
+//     }
+
+//     // hoac co the viet 1 cach khac
+//     // let mut iter = my_vector.into_iter();
+//     // while let Some(value) = iter.next() {
+//     //     println!("{}", value);
+//     // }
+// }
+
+/* std::any::TypeId, la unique identifier cho moi Type */
+// use std::any::{TypeId};
+
+// struct MyStruct {
+//     k: i32,
+//     l: i32,
+// }
+
+// fn main() {
+//     // 'static la 1 lifetime annotation dac biet, no la 1 longest possible lifetime, no duoc allocate o heap
+//     // va chi bi deallocate khi program exits.
+//     fn print_type_id<T: 'static>() {
+//         println!("Type of T is: {:?}", TypeId::of::<T>());
+//     }
+//     let
+//     print_type_id::<i32>();
+//     print_type_id::<u32>();
+//     print_type_id::<MyStruct>();
+// }
+
+/* Box, dyn, Any */
+// Box cung tuong tu nhu unique_ptr() trong C++
+// no la smart pointer de tao ra heap allocation. No dam bao rang 1 thoi diem chi co 1 owner duoc su dung
+
+/* dyn trong Rust cung tuong tu nhu virtual function trong C++
+trait trong Rust cung tuong nhu class trong C++
+Trong C++ ta define 1 base class (nhu Animal), va 1 class khac (nhu Dog, Cat) inherit tu base class
+Sau do trong class thu 2 co virtual function (speak). Khi Compiler chay
+no se tuy thuoc vao bien la class (Dog, Cat) nao ma goi virtual function speak la "Wolf" hay "Meow" */
+/* dyn trong rust cung tuong tu nhu vay */
+
+trait Animal {
+    fn speak(&self) {}
+}
+struct Dog;
+impl Animal for Dog {
+    fn speak(&self) {
+        println! {"Woof"};
+    }
+}
+
+struct Cat;
+impl Animal for Cat {
+    fn speak(&self) {
+        println!("Meow");
+    }
 }
 
 fn main() {
-    let my_collection = MyCollection {
-        items: vec![1, 2, 3, 4, 5],
-    };
+    let data = Box::new(5);
+    println!("Box integer: {}", data);
 
-    // sau khi goi into_iter() o day thi my_collection.items se bi mat
-    for value in my_collection.items.into_iter() {
-        println!("{}", value);
+    let animals: Vec<Box<dyn Animal>> = vec![Box::new(Dog), Box::new(Cat)];
+    // dyn cho phep trong run time co the bien dich ra Animal la Dog hoac Cat de goi function tuong ung
+    // giong nhu virtual function trong C++
+
+    for animal in animals {
+        animal.speak(); // khi goi den Dog thi se la Woof, Cat se la Meow
     }
-
-    // hoac co the viet 1 cach khac
-    // let mut iter = my_vector.into_iter();
-    // while let Some(value) = iter.next() {
-    //     println!("{}", value);
-    // }
 }
